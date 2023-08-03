@@ -1,14 +1,11 @@
 # -*- coding: utf-8 -*-
 import asyncio
-import base64
-import binascii
 import logging
 import uuid
 from typing import *
 
 import api.chat
 import blivedm.blivedm as blivedm
-import blivedm.blivedm.models.pb as blivedm_pb
 import config
 import services.avatar
 import services.translate
@@ -42,7 +39,7 @@ class LiveClientManager:
         logger.info('room=%d creating live client', room_id)
         self._live_clients[room_id] = live_client = LiveClient(room_id)
         live_client.add_handler(_live_msg_handler)
-        asyncio.create_task(self._init_live_client(live_client))
+        asyncio.ensure_future(self._init_live_client(live_client))
         logger.info('room=%d live client created, %d live clients', room_id, len(self._live_clients))
 
     async def _init_live_client(self, live_client: 'LiveClient'):
@@ -59,7 +56,7 @@ class LiveClientManager:
             return
         logger.info('room=%d removing live client', room_id)
         live_client.remove_handler(_live_msg_handler)
-        asyncio.create_task(live_client.stop_and_close())
+        asyncio.ensure_future(live_client.stop_and_close())
         logger.info('room=%d live client removed, %d live clients', room_id, len(self._live_clients))
 
         client_room_manager.del_room(room_id)
@@ -133,7 +130,7 @@ class ClientRoomManager:
 
     def delay_del_room(self, room_id, timeout):
         self._clear_delay_del_timer(room_id)
-        self._delay_del_timer_handles[room_id] = asyncio.get_running_loop().call_later(
+        self._delay_del_timer_handles[room_id] = asyncio.get_event_loop().call_later(
             timeout, self._on_delay_del_room, room_id
         )
 
@@ -206,19 +203,6 @@ class LiveMsgHandler(blivedm.BaseHandler):
     # 重新定义XXX_callback是为了减少对字段名的依赖，防止B站改字段名
     def __danmu_msg_callback(self, client: LiveClient, command: dict):
         info = command['info']
-        dm_v2 = command.get('dm_v2', '')
-
-        proto: Optional[blivedm_pb.SimpleDm] = None
-        if dm_v2 != '':
-            try:
-                proto = blivedm_pb.SimpleDm.loads(base64.b64decode(dm_v2))
-            except (binascii.Error, KeyError, TypeError, ValueError):
-                pass
-        if proto is not None:
-            face = proto.user.face
-        else:
-            face = ''
-
         if len(info[3]) != 0:
             medal_level = info[3][0]
             medal_room_id = info[3][3]
@@ -236,7 +220,6 @@ class LiveMsgHandler(blivedm.BaseHandler):
 
             uid=info[2][0],
             uname=info[2][1],
-            face=face,
             admin=info[2][2],
             urank=info[2][5],
             mobile_verify=info[2][6],
@@ -280,7 +263,7 @@ class LiveMsgHandler(blivedm.BaseHandler):
             price=data['price'],
             message=data['message'],
             start_time=data['start_time'],
-            id=data['id'],
+            id_=data['id'],
             uid=data['uid'],
             uname=data['user_info']['uname'],
             face=data['user_info']['face'],
@@ -296,15 +279,11 @@ class LiveMsgHandler(blivedm.BaseHandler):
     }
 
     async def _on_danmaku(self, client: LiveClient, message: blivedm.DanmakuMessage):
-        asyncio.create_task(self.__on_danmaku(client, message))
+        asyncio.ensure_future(self.__on_danmaku(client, message))
 
     async def __on_danmaku(self, client: LiveClient, message: blivedm.DanmakuMessage):
-        avatar_url = message.face
-        if avatar_url != '':
-            services.avatar.update_avatar_cache_if_expired(message.uid, avatar_url)
-        else:
-            # 先异步调用再获取房间，因为返回时房间可能已经不存在了
-            avatar_url = await services.avatar.get_avatar_url(message.uid)
+        # 先异步调用再获取房间，因为返回时房间可能已经不存在了
+        avatar_url = await services.avatar.get_avatar_url(message.uid)
 
         room = client_room_manager.get_room(client.tmp_room_id)
         if room is None:
@@ -362,8 +341,10 @@ class LiveMsgHandler(blivedm.BaseHandler):
             await self._translate_and_response(message.msg, room.room_id, msg_id)
 
     async def _on_gift(self, client: LiveClient, message: blivedm.GiftMessage):
-        avatar_url = services.avatar.process_avatar_url(message.face)
-        services.avatar.update_avatar_cache_if_expired(message.uid, avatar_url)
+        # avatar_url = services.avatar.process_avatar_url(message.face)
+        # 服务器白给的头像URL，直接缓存
+        # services.avatar.update_avatar_cache(message.uid, avatar_url)
+        avatar_url = await services.avatar.get_avatar_url(message.uid)
 
         # 丢人
         if message.coin_type != 'gold':
@@ -384,7 +365,7 @@ class LiveMsgHandler(blivedm.BaseHandler):
         })
 
     async def _on_buy_guard(self, client: LiveClient, message: blivedm.GuardBuyMessage):
-        asyncio.create_task(self.__on_buy_guard(client, message))
+        asyncio.ensure_future(self.__on_buy_guard(client, message))
 
     @staticmethod
     async def __on_buy_guard(client: LiveClient, message: blivedm.GuardBuyMessage):
@@ -404,8 +385,10 @@ class LiveMsgHandler(blivedm.BaseHandler):
         })
 
     async def _on_super_chat(self, client: LiveClient, message: blivedm.SuperChatMessage):
-        avatar_url = services.avatar.process_avatar_url(message.face)
-        services.avatar.update_avatar_cache_if_expired(message.uid, avatar_url)
+        # avatar_url = services.avatar.process_avatar_url(message.face)
+        # 服务器白给的头像URL，直接缓存
+        # services.avatar.update_avatar_cache(message.uid, avatar_url)
+        avatar_url = await services.avatar.get_avatar_url(message.uid)
 
         room = client_room_manager.get_room(client.tmp_room_id)
         if room is None:
@@ -434,7 +417,7 @@ class LiveMsgHandler(blivedm.BaseHandler):
         })
 
         if need_translate:
-            asyncio.create_task(self._translate_and_response(message.message, room.room_id, msg_id))
+            asyncio.ensure_future(self._translate_and_response(message.message, room.room_id, msg_id))
 
     async def _on_super_chat_delete(self, client: LiveClient, message: blivedm.SuperChatDeleteMessage):
         room = client_room_manager.get_room(client.tmp_room_id)

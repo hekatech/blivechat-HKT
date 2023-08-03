@@ -1,28 +1,30 @@
 import { getUuid4Hex } from '@/utils'
 import * as constants from '@/components/ChatRenderer/constants'
-import * as avatar from './avatar'
 
 const NAMES = [
-  'xfgryujk', 'Simon', 'Il Harper', 'Kinori', 'shugen', 'yuyuyzl', '3Shain', '光羊', '黑炎', 'Misty', '孤梦星影',
-  'ジョナサン・ジョースター', 'ジョセフ・ジョースター', 'ディオ・ブランドー', '空條承太郎', '博丽灵梦', '雾雨魔理沙',
-  'Rick Astley'
+  'R-027', 'Rlietzh', '橘すずし', '凉栀Tiphareth',
+  'Reth', '打游戏不要真情实感会遭报应的', '天才代码剪辑师',
+  '一般路过晴天娃娃', '名字很长的萨卡班甲鱼'
 ]
 
 const CONTENTS = [
-  '草', 'kksk', '8888888888', '888888888888888888888888888888', '老板大气，老板身体健康',
-  'The quick brown fox jumps over the lazy dog', "I can eat glass, it doesn't hurt me",
-  '我不做人了，JOJO', '無駄無駄無駄無駄無駄無駄無駄無駄', '欧啦欧啦欧啦欧啦欧啦欧啦欧啦欧啦', '逃げるんだよォ！',
-  '嚯，朝我走过来了吗，没有选择逃跑而是主动接近我么', '不要停下来啊', '已经没有什么好怕的了',
-  'I am the bone of my sword. Steel is my body, and fire is my blood.', '言いたいことがあるんだよ！',
-  '我忘不掉夏小姐了。如果不是知道了夏小姐，说不定我已经对这个世界没有留恋了', '迷えば、敗れる',
-  'Farewell, ashen one. May the flame guide thee', '竜神の剣を喰らえ！', '竜が我が敌を喰らう！',
-  '有一说一，这件事大家懂的都懂，不懂的，说了你也不明白，不如不说', '让我看看', '我柜子动了，我不玩了'
+  'Hello I\'m Tiphareth the Replicant Angel from HEKATECH',
+  '草', '啊？', '噢！你做国对家暗杠九筒咯', '？', '6', '早上好', '下午好', '晚上好',
+  'サカサカバンバンバスピスピス', '麻烦来一杯云雾栀子青去冰五分糖谢谢',
+  'e586a5e69c88e381abe890bde381a1e8bebce38293e381a7e38184e3828b',
+  '做 V 不赚钱，改行卖寿司去了，寿司卖不出卖代码也行',
+  '这就是你们人类的语言吗？',
+  '关注凉栀 Tiphareth 喵关注凉栀 Tiphareth 谢谢喵',
+  '听说 B 站弹幕长度上限是 40 个字，但是我要编点什么才能凑够这 40 个字呢？'
 ]
 
 const EMOTICONS = [
-  '/static/img/emoticons/233.png',
-  '/static/img/emoticons/miaoa.png',
-  '/static/img/emoticons/lipu.png'
+  '/static/img/avatars/打车.png',
+  '/static/img/avatars/打拳.png',
+  '/static/img/avatars/米.png',
+  '/static/img/avatars/奶茶.png',
+  '/static/img/avatars/手机.png',
+  '/static/img/avatars/问号.png'
 ]
 
 const AUTHOR_TYPES = [
@@ -67,7 +69,7 @@ const MESSAGE_GENERATORS = [
         type: constants.MESSAGE_TYPE_TEXT,
         message: {
           ...randGuardInfo(),
-          avatarUrl: avatar.DEFAULT_AVATAR_URL,
+          avatarUrl: randomChoose(EMOTICONS),
           timestamp: new Date().getTime() / 1000,
           authorName: randomChoose(NAMES),
           content: randomChoose(CONTENTS),
@@ -91,7 +93,7 @@ const MESSAGE_GENERATORS = [
         type: constants.MESSAGE_TYPE_TEXT,
         message: {
           ...randGuardInfo(),
-          avatarUrl: avatar.DEFAULT_AVATAR_URL,
+          avatarUrl: randomChoose(EMOTICONS),
           timestamp: new Date().getTime() / 1000,
           authorName: randomChoose(NAMES),
           content: '',
@@ -116,7 +118,7 @@ const MESSAGE_GENERATORS = [
         message: {
           ...randomChoose(GIFT_INFO_LIST),
           id: getUuid4Hex(),
-          avatarUrl: avatar.DEFAULT_AVATAR_URL,
+          avatarUrl: randomChoose(EMOTICONS),
           timestamp: new Date().getTime() / 1000,
           authorName: randomChoose(NAMES),
           num: 1
@@ -132,7 +134,7 @@ const MESSAGE_GENERATORS = [
         type: constants.MESSAGE_TYPE_SUPER_CHAT,
         message: {
           id: getUuid4Hex(),
-          avatarUrl: avatar.DEFAULT_AVATAR_URL,
+          avatarUrl: randomChoose(EMOTICONS),
           timestamp: new Date().getTime() / 1000,
           authorName: randomChoose(NAMES),
           price: randomChoose(SC_PRICES),
@@ -150,7 +152,7 @@ const MESSAGE_GENERATORS = [
         type: constants.MESSAGE_TYPE_MEMBER,
         message: {
           id: getUuid4Hex(),
-          avatarUrl: avatar.DEFAULT_AVATAR_URL,
+          avatarUrl: randomChoose(EMOTICONS),
           timestamp: new Date().getTime() / 1000,
           authorName: randomChoose(NAMES),
           privilegeType: randInt(1, 3)

@@ -1,6 +1,7 @@
-# blivechat-newlook
+# blivechat-HKT
 
 基于 [blivechat v1.6.1](https://github.com/xfgryujk/blivechat) 魔改的自用 blivechat
+~~呃虽然仓库里的源文件是从 1.6.2 拉下来的，好像改了不少地方~~
 
 - 参考 [issue#84](https://github.com/xfgryujk/blivechat/issues/84#issuecomment-1403909552) 修复了头像显示
 - 参考 [issue#111](https://github.com/xfgryujk/blivechat/issues/111) 修复了用户名显示（官方版本已 merge）
